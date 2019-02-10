@@ -6,7 +6,9 @@ const bodyParser =  require('body-parser');
 
 const app = express();
 
-const SCOPES = ['https://www.googleapis.com/auth/script.projects'];
+const SCOPES = [
+	'https://www.googleapis.com/auth/forms',
+];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
@@ -29,7 +31,7 @@ app.post('/team', function(req, res) {
 		authorize(JSON.parse(content), callAppsScript);
 	});
 
-	res.redirect('http://example.com');
+	res.redirect('https://docs.google.com/forms/d/e/1FAIpQLSdOSbvwTkpsezfCJQph8tJLDCjOsaKYvbwCkQwM43vdwqiedg/viewform?usp=sf_link');
 });
 
 app.listen(3000, function() {
@@ -91,13 +93,12 @@ function getAccessToken(oAuth2Client, callback) {
   });
 }
 
-function callAppsScript(auth) { // eslint-disable-line no-unused-vars
+function callAppsScript(auth) {
   const scriptId = '1Hni4p7qNaZbKxTWrFATsThJLOv-wd69NGnFqibxs2-As5pJnLXs8fgod';
   const script = google.script('v1');
 
-  // Make the API request. The request object is included here as 'resource'.
   script.scripts.run({
-    auth: auth,
+    auth,
     resource: {
       function: 'setNameAsFormDesc',
       parameters: [
@@ -109,6 +110,7 @@ function callAppsScript(auth) { // eslint-disable-line no-unused-vars
     if (err) {
       // The API encountered a problem before the script started executing.
       console.log('The API returned an error: ' + err);
+      console.log(resp.data);
       return;
     }
     if (resp.error) {
