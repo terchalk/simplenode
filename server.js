@@ -7,6 +7,7 @@ const bodyParser =  require('body-parser');
 const app = express();
 
 const SCOPES = [
+  'https://www.googleapis.com/auth/script.projects',
 	'https://www.googleapis.com/auth/forms',
 ];
 // The file token.json stores the user's access and refresh tokens, and is
@@ -50,7 +51,7 @@ app.listen(3000, function() {
  * @param {function} callback The callback to call with the authorized client.
  */
 function authorize(credentials, callback) {
-  const {client_secret, client_id, redirect_uris} = credentials.installed;
+  const {client_secret, client_id, redirect_uris} = credentials.web;
   const oAuth2Client = new google.auth.OAuth2(
       client_id, client_secret, redirect_uris[0]);
 
@@ -73,6 +74,7 @@ function getAccessToken(oAuth2Client, callback) {
     access_type: 'offline',
     scope: SCOPES,
   });
+  console.log(SCOPES);
   console.log('Authorize this app by visiting this url:', authUrl);
   const rl = readline.createInterface({
     input: process.stdin,
@@ -94,16 +96,17 @@ function getAccessToken(oAuth2Client, callback) {
 }
 
 function callAppsScript(auth) {
-  const scriptId = '1Hni4p7qNaZbKxTWrFATsThJLOv-wd69NGnFqibxs2-As5pJnLXs8fgod';
+  const scriptId = '1jl5EpXi5SwOtb9tHjSlqMUs9H5J-BGco_R0SpCSe1sVEUYxGdDUkHLeW';
   const script = google.script('v1');
 
   script.scripts.run({
     auth,
     resource: {
       function: 'setNameAsFormDesc',
-      parameters: [
-      	participantName
-      ]	
+      // parameters: [
+      // 	participantName
+      // ]
+      devMode: true
     },
     scriptId: scriptId,
   }, function(err, resp) {
