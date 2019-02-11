@@ -1,19 +1,45 @@
+const express = require('express');
+const bodyParser =  require('body-parser');
 const fs = require('fs');
 const readline = require('readline');
 const {google} = require('googleapis');
 
+const app = express();
+
 // If modifying these scopes, delete token.json.
-const SCOPES = ['https://www.googleapis.com/auth/script.projects'];
+const SCOPES = 
+[
+  "https://www.googleapis.com/auth/script.projects",
+  "https://www.googleapis.com/auth/drive.file",
+  "https://www.googleapis.com/auth/drive",
+  "https://www.googleapis.com/auth/forms"
+];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
 const TOKEN_PATH = 'token.json';
 
-// Load client secrets from a local file.
-fs.readFile('credentials.json', (err, content) => {
-  if (err) return console.log('Error loading client secret file:', err);
-  // Authorize a client with credentials, then call the Google Apps Script API.
-  authorize(JSON.parse(content), callAppsScript);
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.static(__dirname + "/public"));
+
+app.post('/team', function(req, res) {
+  let name = req.body;
+  console.log(JSON.stringify(name));
+  participantName = req.body;
+
+  // Load client secrets from a local file.
+  fs.readFile('credentials.json', (err, content) => {
+    if (err) return console.log('Error loading client secret file:', err);
+    // Authorize a client with credentials, then call the Google Apps Script API.
+    authorize(JSON.parse(content), callAppsScript);
+  });
+
+  res.redirect('https://docs.google.com/forms/d/e/1FAIpQLSdOSbvwTkpsezfCJQph8tJLDCjOsaKYvbwCkQwM43vdwqiedg/viewform?usp=sf_link');
+});
+
+app.listen(3000, function() {
+  console.log("started :)");
 });
 
 /**
@@ -23,15 +49,18 @@ fs.readFile('credentials.json', (err, content) => {
  * @param {function} callback The callback to call with the authorized client.
  */
 function authorize(credentials, callback) {
-  const {client_secret, client_id, redirect_uris} = credentials.installed;
+  const {client_secret, client_id, redirect_uris} = credentials.web;
   const oAuth2Client = new google.auth.OAuth2(
       client_id, client_secret, redirect_uris[0]);
 
   // Check if we have previously stored a token.
   fs.readFile(TOKEN_PATH, (err, token) => {
-    if (err) return getAccessToken(oAuth2Client, callback);
-    oAuth2Client.setCredentials(JSON.parse(token));
-    callback(oAuth2Client);
+    if (err) {
+      return getAccessToken(oAuth2Client, callback);
+    } else {
+      oAuth2Client.setCredentials(JSON.parse(token));
+      callback(oAuth2Client); 
+    }
   });
 }
 
@@ -71,31 +100,23 @@ function getAccessToken(oAuth2Client, callback) {
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
 function callAppsScript(auth) {
-  const script = google.script({version: 'v1', auth});
-  script.projects.create({
+  const scriptId = '11jQnbvTIG_ov5Y-E4M4T2yzKvOMIvVT_Gu24ba1AMYW0Z24LTM767HRn';
+  const script = google.script('v1');
+  
+  script.scripts.run({
+    auth: auth,
     resource: {
-      title: 'My Script',
+      function: 'change'
     },
-  }, (err, res) => {
-    if (err) return console.log(`The API create method returned an error: ${err}`);
-    script.projects.updateContent({
-      scriptId: res.data.scriptId,
-      auth,
-      resource: {
-        files: [{
-          name: 'hello',
-          type: 'SERVER_JS',
-          source: 'function helloWorld() {\n  console.log("Hello, world!");\n}',
-        }, {
-          name: 'appsscript',
-          type: 'JSON',
-          source: '{\"timeZone\":\"America/New_York\",\"exceptionLogging\":' +
-           '\"CLOUD\"}',
-        }],
-      },
-    }, {}, (err, res) => {
-      if (err) return console.log(`The API updateContent method returned an error: ${err}`);
-      console.log(`https://script.google.com/d/${res.data.scriptId}/edit`);
-    });
+    scriptId: scriptId,
+  }, function(err, resp) {
+    // console.log(JSON.stringify(resp.data.error.details));
+    // console.log(resp);
+    if (err) {
+      // The API encountered a problem before the script started executing.
+      console.log('The API returned an error: ' + err);
+      return;
+    }
   });
+
 }
