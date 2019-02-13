@@ -7,9 +7,18 @@
 	</head>
 	<body>
 		<h1 class="center-align">Food Form</h1>
-		<form action="/team" method="POST">
-			<input type="text" name="name" />
-		    <input type="submit" value="submit">
- 		</form>
+		<div class="container center-align">
+			<form action="/team" method="POST">
+				<div class="row center-align">
+					<div class="input-field">
+						<input class="validate" placeholder="Enter your name" type="text" id="name" name="name" />
+						<label for="name" class="active">Name</label>
+					</div>
+				</div>
+			  <button class="btn waves-effect waves-light" type="submit" value="submit">
+					send
+			  </button>
+	 		</form>
+	 	</div>
 	</body>
 </html>
